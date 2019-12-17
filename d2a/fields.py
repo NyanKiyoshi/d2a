@@ -346,14 +346,34 @@ except AttributeError:
     pass
 
 try:
+    # Note: Django's JSONField is a JSONB index (not JSON type)
+    #
+    # Note: django will move it to models.json.JSONField in a future major release
+    #       https://code.djangoproject.com/ticket/12990
     mapping[postgres_fields.JSONField] = {
         '_default_type': default_types.JSON,
-        '_postgresql_type': postgresql_types.JSON,
+        '_postgresql_type': postgresql_types.JSONB,
         '_mysql_type': mysql_types.JSON,
         '_oracle_type': default_types.JSON,
     }
 except AttributeError:
     pass
+
+
+# Support for jsonfield.fields.JSONField
+# (for non-postgres users or backward compatible projects)
+# Note: this is a non-JSONB field
+try:
+    import jsonfield.fields
+    mapping[jsonfield.fields.JSONField] = {
+        '_default_type': default_types.JSON,
+        '_postgresql_type': postgresql_types.JSON,
+        '_mysql_type': mysql_types.JSON,
+        '_oracle_type': default_types.JSON,
+    }
+except ImportError:
+    pass
+
 
 def alias(new_field, existing_field):
     """It defines a new converting rule same with existing one.
